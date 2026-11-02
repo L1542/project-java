@@ -1,0 +1,112 @@
+package gui;
+
+public final class FitnessGUI extends javax.swing.JFrame {
+
+    public FitnessGUI() {
+        initComponents();}
+    
+    // ===================== ตรวจสอบตัวเลขจากช่องกรอก =====================
+
+    private double readNumber(javax.swing.JTextField f, String name, double min, double max) {
+        String text = f.getText().trim();
+        if (text.isEmpty()) {
+            f.requestFocusInWindow();
+            throw new IllegalArgumentException("Please fill in \"" + name + "\""); }
+        if (!text.matches("\\d+(\\.\\d+)?")) {
+            f.requestFocusInWindow();
+            f.selectAll();
+            throw new IllegalArgumentException("\"" + name + "\" must be a number.");}
+        double v = Double.parseDouble(text);
+        if (v < min) {
+            f.requestFocusInWindow();
+            f.selectAll();
+            throw new IllegalArgumentException(String.format("\"%s\" Too low (must not be less than %.0f)", name, min)); }
+        if (v > max) {
+            f.requestFocusInWindow();
+            f.selectAll();
+            throw new IllegalArgumentException(String.format( "\"%s\" Too high (must not exceed %.0f)", name, max));}
+        return v;}
+ private void btnBurnActionPerformed(java.awt.event.ActionEvent evt) {                                        
+        btnBurn.setEnabled(false);
+        try {
+            double w = readNumber(txtWeight2, "Weight", 20, 300);
+            double m = readNumber(txtMinutes, "Time", 1, 600);
+            int i = cmbSport.getSelectedIndex();
+
+            double kcal = Calculations.kcalBurned(i, w, m);
+            double fatG = kcal / 7.7;
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("%s %.0f นาที\n", Calculations.SPORT_NAMES[i], m));
+            sb.append(String.format("เผาผลาญประมาณ %.0f kcal\n\n", kcal));
+            sb.append(String.format("เทียบเท่าไขมันประมาณ %.0f กรัม\n", fatG));
+            sb.append(String.format("ค่า MET = %.1f\n\n", Calculations.SPORT_MET[i]));
+
+            sb.append("เทียบกับอาหาร\n");
+            sb.append(String.format("• ข้าวสวย 1 จาน (~250 kcal): %.1f จาน\n", kcal / 250));
+            sb.append(String.format("• ชานมไข่มุก 1 แก้ว (~400 kcal): %.1f แก้ว\n\n", kcal / 400));
+
+            sb.append(String.format("เทียบทุกกิจกรรม (%.0f นาที)\n", m));
+            for (int k = 0; k < Calculations.SPORT_NAMES.length; k++) {
+                sb.append(String.format("• %s: %.0f kcal\n",
+                    Calculations.SPORT_NAMES[k], Calculations.kcalBurned(k, w, m)));}
+        lblBurnResult.setText(sb.toString());
+        } catch (IllegalArgumentException ex) { javax.swing.JOptionPane.showMessageDialog(this, ex.getMessage());
+        } finally {btnBurn.setEnabled(true);}
+    }                                       
+ private void btnHeartActionPerformed(java.awt.event.ActionEvent evt) {                                         
+        btnHeart.setEnabled(false);
+        try {
+            double a = readNumber(txtAgeHR, "Age", 10, 100);
+            double r = readNumber(txtRestHR, "Resting Heart Rate", 30, 120);
+            double max = 220 - a;
+            if (max - r <= 0) { throw new IllegalArgumentException("Resting heart rate must be lower than maximum heart rate.");}
+
+            double[][] zones = Calculations.heartZones(a, r);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("อัตราการเต้นสูงสุด = %.0f bpm\n", max));
+            sb.append("(สูตร Karvonen: ชีพจรเป้าหมาย = ชีพจรพัก + %HRR × (สูงสุด − พัก))\n\n");
+            for (int i = 0; i < zones.length; i++) {
+                sb.append(String.format("■ %s\n    %.0f - %.0f bpm (%.0f-%.0f%%)\n",
+                    Calculations.HEART_ZONE_NAMES[i], zones[i][0], zones[i][1],
+                    Calculations.HEART_ZONE_LO[i] * 100, Calculations.HEART_ZONE_HI[i] * 100));}
+        lblHeartResult.setText(sb.toString());
+        } catch (IllegalArgumentException ex) {javax.swing.JOptionPane.showMessageDialog(this, ex.getMessage());
+        } finally {btnHeart.setEnabled(true);}
+    }                                        
+ private void btnCalcActionPerformed(java.awt.event.ActionEvent evt) {                                        
+        btnCalc.setEnabled(false);
+        try {
+            double w = readNumber(txtWeight, "Weight", 20, 300);
+            double h = readNumber(txtHeight, "Height", 100, 250);
+            double a = readNumber(txtAge, "Age", 10, 100);
+            boolean male = cmbGender.getSelectedIndex() == 0;
+            int activity = cmbActivity.getSelectedIndex();
+
+            double bmi = Calculations.bmi(w, h);
+            double bmr = Calculations.bmr(w, h, a, male);
+            double tdee = Calculations.tdee(bmr, activity);
+            double hm = h / 100.0;
+
+            lblResult.setText(String.format("BMI = %.1f\n"
+                + "%s\n\n"
+                + "BMR (พลังงานขณะพัก): %.0f kcal/วัน\n"
+                + "TDEE (พลังงานที่ใช้ต่อวัน): %.0f kcal/วัน\n\n"
+                + "น้ำหนักที่เหมาะสม: %.1f - %.1f กก.\n\n"
+                + "เป้าหมายแคลอรี่\n"
+                + "• ลดน้ำหนัก: ~%.0f kcal/วัน\n"
+                + "• คงน้ำหนัก: ~%.0f kcal/วัน\n"
+                + "• เพิ่มกล้ามเนื้อ: ~%.0f kcal/วัน\n\n"
+                + "BMR คำนวณด้วยสูตร Mifflin-St Jeor / เกณฑ์ BMI สำหรับคนเอเชีย",
+                bmi, Calculations.bmiCategory(bmi),
+                bmr, tdee,
+                18.5 * hm * hm, 22.9 * hm * hm,
+                tdee - 500, tdee, tdee + 300));
+        } catch (IllegalArgumentException ex) {javax.swing.JOptionPane.showMessageDialog(this, ex.getMessage());
+        } finally {btnCalc.setEnabled(true);}
+    }                                       
+ public static void main(String args[]) throws Exception {
+    javax.swing.UIManager.setLookAndFeel(
+            javax.swing.UIManager.getSystemLookAndFeelClassName());
+    java.awt.EventQueue.invokeLater(() -> new FitnessGUI().setVisible(true));}
