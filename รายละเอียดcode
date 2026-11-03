@@ -1,0 +1,334 @@
+// ===== FitnessGUI.java =====
+package gui;                                              // ประกาศแพ็กเกจ "gui" (ต้องอยู่บรรทัดแรกของไฟล์เท่านั้น)
+
+import java.util.ArrayList;                               // นำเข้าคลาส ArrayList สำหรับเก็บรายการแบบยืดหยุ่น
+import java.util.List;                                    // นำเข้า interface List
+import javax.swing.DefaultListModel;                      // นำเข้าโมเดลสำหรับ JList (รายการวัน)
+import javax.swing.table.DefaultTableModel;               // นำเข้าโมเดลสำหรับ JTable (ตารางท่า)
+
+public final class FitnessGUI extends javax.swing.JFrame {  // คลาสหน้าต่างหลัก สืบทอดจาก JFrame, final = สืบทอดต่อไม่ได้
+
+    public FitnessGUI() {                                 // constructor ทำงานตอนสร้างหน้าต่าง
+        initComponents();                                 // เมธอดที่ NetBeans สร้างให้ วางปุ่ม ช่อง และแท็บ
+        setupWorkoutTab(); }                              // ตั้งค่าแท็บตารางออกกำลังกาย (เขียนเอง)
+
+    private final List<DayPlan> plans = new ArrayList<>();  // เก็บแผนออกกำลังกาย 7 วัน (final = ไม่เปลี่ยน reference)
+    private List<String[]> currentRows;                   // เก็บรายการท่าของวันที่กำลังเลือกอยู่
+    // ===================== แท็บ 4: ตารางออกกำลังกาย =====================
+
+    static class DayPlan {                                // คลาสซ้อน static เก็บข้อมูลของแต่ละวัน
+        String day;                                       // ชื่อวัน เช่น "จันทร์ : อก + ไตรเซ็ป"
+        List<String[]> rows = new ArrayList<>();          // รายการท่า แต่ละแถว = {ท่า, จำนวน, พัก, กล้ามเนื้อ, วิธีทำ}
+
+        DayPlan(String day) { this.day = day; }           // constructor รับชื่อวันมาเก็บ
+
+        DayPlan add(String name, String sets, String rest, String muscle, String how) {  // เพิ่มท่า 1 ท่า
+            rows.add(new String[]{name, sets, rest, muscle, how});  // สร้างอาร์เรย์ 5 ช่องแล้วใส่ลง rows
+            return this;}}                                // คืนตัวเอง เพื่อเรียก .add() ต่อกันได้ (method chaining)
+
+    private void buildPlans() {                           // สร้างข้อมูลแผนทั้ง 7 วัน
+        plans.add(new DayPlan("จันทร์ : อก + ไตรเซ็ป")     // สร้างวันจันทร์ แล้วเพิ่มเข้า plans
+            .add("วิดพื้น", "3 x 12 ครั้ง", "60 วิ", "อก, ไหล่, ไตรเซ็ป",   // ท่าที่ 1: ชื่อ เซต พัก กล้ามเนื้อ
+                 "มือกว้างกว่าไหล่เล็กน้อย ลำตัวตรง ลดตัวลงจนอกเกือบถึงพื้น แล้วดันกลับ")  // วิธีทำ
+            .add("วิดพื้นเอียง", "3 x 10 ครั้ง", "60 วิ", "อกส่วนล่าง",    // ท่าที่ 2
+                 "วางมือบนเก้าอี้หรือขั้นบันได ลำตัวเป็นเส้นตรง")
+            .add("ดิปส์ด้วยเก้าอี้", "3 x 10 ครั้ง", "60 วิ", "ไตรเซ็ป",    // ท่าที่ 3
+                 "มือเกาะขอบเก้าอี้ด้านหลัง งอศอกลง 90 องศา แล้วดันขึ้น")
+            .add("วิดพื้นมือชิด", "3 x 8 ครั้ง", "60 วิ", "ไตรเซ็ป, อกด้านใน",  // ท่าที่ 4
+                 "มือทำเป็นรูปเพชรใต้อก ศอกแนบลำตัว")
+            .add("แพลงก์", "3 x 30 วิ", "45 วิ", "แกนกลางลำตัว",          // ท่าที่ 5
+                 "ศอกอยู่ใต้ไหล่ ลำตัวเป็นเส้นตรง เกร็งหน้าท้องและก้น"));
+
+        plans.add(new DayPlan("อังคาร : ขา + ก้น")          // วันอังคาร
+            .add("สควอท", "4 x 15 ครั้ง", "60 วิ", "ต้นขา, ก้น",          // ท่าที่ 1
+                 "ยืนกว้างเท่าไหล่ ย่อตัวให้ต้นขาขนานพื้น เข่าไม่เลยปลายเท้า")
+            .add("ลันจ์", "3 x 12 ครั้ง/ข้าง", "60 วิ", "ต้นขา, ก้น",     // ท่าที่ 2
+                 "ก้าวขาไปข้างหน้า ย่อจนเข่าหลังเกือบแตะพื้น แล้วดันกลับ")
+            .add("กลูทบริดจ์", "3 x 15 ครั้ง", "45 วิ", "ก้น, หลังส่วนล่าง",  // ท่าที่ 3
+                 "นอนหงายชันเข่า ยกสะโพกขึ้นจนลำตัวเป็นเส้นตรง บีบก้นค้างไว้ 1 วิ")
+            .add("ยกส้นเท้า", "3 x 20 ครั้ง", "30 วิ", "น่อง",            // ท่าที่ 4
+                 "ยืนเขย่งปลายเท้าขึ้นให้สุด แล้วลดลงช้าๆ")
+            .add("นั่งพิงกำแพง", "3 x 30 วิ", "45 วิ", "ต้นขาด้านหน้า",     // ท่าที่ 5
+                 "พิงหลังกับกำแพง ย่อเข่า 90 องศา ค้างไว้"));
+
+        plans.add(new DayPlan("พุธ : คาร์ดิโอ")              // วันพุธ
+            .add("กระโดดตบ", "3 x 45 วิ", "30 วิ", "ทั้งตัว",             // ท่าที่ 1
+                 "กระโดดพร้อมกางแขนขาออก แล้วหุบกลับ")
+            .add("ยกเข่าสูง", "3 x 30 วิ", "30 วิ", "ขา, หัวใจ",          // ท่าที่ 2
+                 "วิ่งอยู่กับที่ ยกเข่าให้สูงระดับสะโพก")
+            .add("เบอร์พี", "3 x 10 ครั้ง", "60 วิ", "ทั้งตัว",           // ท่าที่ 3
+                 "ย่อลงวิดพื้น 1 ครั้ง แล้วกระโดดขึ้นพร้อมยกมือเหนือหัว")
+            .add("ปีนเขา", "3 x 30 วิ", "30 วิ", "แกนกลาง, ไหล่",          // ท่าที่ 4
+                 "ท่าวิดพื้น สลับดึงเข่าเข้าหาอกอย่างเร็ว")
+            .add("วิ่งเหยาะๆ", "20 นาที", "-", "หัวใจ, ขา",              // ท่าที่ 5
+                 "วิ่งในความเร็วที่ยังพูดคุยได้"));
+
+        plans.add(new DayPlan("พฤหัสบดี : หลัง + ไบเซ็ป")     // วันพฤหัสบดี
+            .add("ซูเปอร์แมน", "3 x 12 ครั้ง", "45 วิ", "หลังส่วนล่าง",    // ท่าที่ 1
+                 "นอนคว่ำ ยกแขนและขาขึ้นพร้อมกัน ค้าง 2 วิ")
+            .add("ดัมเบลโรว์", "3 x 12 ครั้ง/ข้าง", "60 วิ", "หลังส่วนบน, ไบเซ็ป",  // ท่าที่ 2
+                 "โน้มตัว ดึงดัมเบล/ขวดน้ำเข้าหาเอว บีบสะบัก")
+            .add("ไบเซ็ปเคิร์ล", "3 x 12 ครั้ง", "45 วิ", "ไบเซ็ป",        // ท่าที่ 3
+                 "ศอกแนบลำตัว งอข้อศอกยกขึ้น แล้วลดลงช้าๆ")
+            .add("เบิร์ดด็อก", "3 x 10 ครั้ง/ข้าง", "30 วิ", "หลัง, แกนกลาง",  // ท่าที่ 4
+                 "คลานสี่ขา ยกแขนขวากับขาซ้ายพร้อมกัน สลับข้าง")
+            .add("ยืดเหยียดหลัง", "2 x 30 วิ", "-", "หลัง",                // ท่าที่ 5
+                 "นั่งทับส้นเท้า ก้มตัวและเหยียดแขนไปข้างหน้า"));
+
+        plans.add(new DayPlan("ศุกร์ : ไหล่ + หน้าท้อง")       // วันศุกร์
+            .add("ไพค์พุชอัพ", "3 x 10 ครั้ง", "60 วิ", "ไหล่",            // ท่าที่ 1
+                 "ตั้งสะโพกสูงเป็นรูปตัว V งอศอกให้หัวลงไปหาพื้น")
+            .add("ยกแขนด้านข้าง", "3 x 12 ครั้ง", "45 วิ", "ไหล่",         // ท่าที่ 2
+                 "ถือน้ำหนัก ยกแขนออกข้างระดับไหล่ แล้วลดลงช้าๆ")
+            .add("ครันช์", "3 x 20 ครั้ง", "30 วิ", "หน้าท้อง",           // ท่าที่ 3
+                 "นอนหงายชันเข่า ยกไหล่ขึ้นเล็กน้อย เกร็งหน้าท้อง")
+            .add("ยกขา", "3 x 12 ครั้ง", "45 วิ", "หน้าท้องส่วนล่าง",       // ท่าที่ 4
+                 "นอนหงาย ยกขาตรงขึ้น 90 องศา แล้วลดลงไม่แตะพื้น")
+            .add("รัสเซียนทวิสต์", "3 x 20 ครั้ง", "30 วิ", "หน้าท้องด้านข้าง",  // ท่าที่ 5
+                 "นั่งเอนตัว บิดลำตัวสลับซ้าย-ขวา"));
+
+        plans.add(new DayPlan("เสาร์ : HIIT ทั้งตัว")         // วันเสาร์ (HIIT = สลับหนัก-พัก)
+            .add("สควอทกระโดด", "4 รอบ x 40 วิ", "20 วิ", "ขา, ก้น",       // ท่าที่ 1
+                 "ย่อตัวแล้วกระโดดขึ้นสุดแรง ลงนุ่มนวล")
+            .add("วิดพื้น", "4 รอบ x 40 วิ", "20 วิ", "อก, แขน",           // ท่าที่ 2
+                 "ทำให้ได้มากที่สุดในเวลาที่กำหนด")
+            .add("เบอร์พี", "4 รอบ x 40 วิ", "20 วิ", "ทั้งตัว",           // ท่าที่ 3
+                 "ทำต่อเนื่องไม่หยุด")
+            .add("ปีนเขา", "4 รอบ x 40 วิ", "20 วิ", "แกนกลาง",            // ท่าที่ 4
+                 "ท่าวิดพื้น สลับเข่าเร็วๆ")
+            .add("แพลงก์", "4 รอบ x 40 วิ", "20 วิ", "แกนกลาง",            // ท่าที่ 5
+                 "ลำตัวตรง เกร็งหน้าท้อง"));
+
+        plans.add(new DayPlan("อาทิตย์ : พักผ่อน / ยืดเหยียด")  // วันอาทิตย์ (พัก)
+            .add("เดินเล่น", "20-30 นาที", "-", "ทั้งตัว",                 // ท่าที่ 1
+                 "เดินสบายๆ ผ่อนคลายกล้ามเนื้อ")
+            .add("แคท-คาว", "2 x 10 ครั้ง", "-", "กระดูกสันหลัง",          // ท่าที่ 2
+                 "คลานสี่ขา สลับแอ่นหลังและโค้งหลัง")
+            .add("ยืดเหยียดต้นขาหลัง", "2 x 30 วิ/ข้าง", "-", "ต้นขาด้านหลัง",  // ท่าที่ 3
+                 "นั่งเหยียดขาข้างเดียว โน้มตัวไปแตะปลายเท้า")
+            .add("ยืดสะโพก", "2 x 30 วิ/ข้าง", "-", "สะโพก",               // ท่าที่ 4
+                 "ก้าวขาไปข้างหน้าในท่าลันจ์ ดันสะโพกลง")
+            .add("นอนหายใจลึกๆ", "5 นาที", "-", "จิตใจ",                   // ท่าที่ 5
+                 "นอนหงาย หายใจเข้า-ออกช้าๆ ผ่อนคลายทั้งตัว"));}  // ปิดเมธอด buildPlans
+
+    private void setupWorkoutTab() {                      // ตั้งค่าการทำงานของแท็บตารางออกกำลังกาย
+        buildPlans();                                     // สร้างข้อมูลแผนก่อน
+
+        DefaultListModel<String> lm = new DefaultListModel<>();  // โมเดลสำหรับรายการวัน
+        for (DayPlan p : plans) lm.addElement(p.day);     // ใส่ชื่อวันทั้ง 7 วันลงในโมเดล
+        jList1.setModel(lm);                              // ผูกโมเดลกับ JList ทางซ้าย (jList1)
+        jList1.setFixedCellHeight(40);                    // กำหนดความสูงแต่ละแถวเป็น 40 พิกเซล
+        jList1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);  // เลือกได้ทีละ 1 วัน
+
+        jTable1.setRowHeight(32);                         // ความสูงแต่ละแถวในตาราง 32 พิกเซล
+        jTable1.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION); // เลือกได้ทีละ 1 แถว
+
+        txtHow.setEnabled(true);                          // เปิดใช้งานช่องวิธีทำ
+        txtHow.setEditable(false);                        // ห้ามพิมพ์แก้ไข (ใช้แสดงผลอย่างเดียว)
+        txtHow.setLineWrap(true);                         // ตัดบรรทัดเมื่อข้อความยาวเกิน
+        txtHow.setWrapStyleWord(true);                    // ตัดบรรทัดตามคำ ไม่ตัดกลางคำ
+
+        jList1.addListSelectionListener(e -> {            // เมื่อผู้ใช้เลือกวันใหม่
+            if (!e.getValueIsAdjusting())                 // รอจนการเลือกเสร็จ (ไม่ทำระหว่างลาก)
+                showDay(jList1.getSelectedIndex()); });   // แสดงท่าของวันที่เลือก
+
+        jTable1.getSelectionModel().addListSelectionListener(e -> {  // เมื่อผู้ใช้คลิกแถวในตาราง
+            if (e.getValueIsAdjusting()) return;          // ข้ามถ้ายังกำลังเลือกอยู่
+            int r = jTable1.getSelectedRow();             // index แถวที่เลือก (-1 ถ้าไม่มี)
+            if (r >= 0 && currentRows != null && r < currentRows.size()) {  // ตรวจว่าแถวถูกต้อง
+                String[] ex = currentRows.get(r);         // ดึงข้อมูลท่านั้นมา
+                txtHow.setText(ex[0] + "\n" + ex[4]);     // แสดงชื่อท่า ขึ้นบรรทัดใหม่ แล้วตามด้วยวิธีทำ
+                txtHow.setCaretPosition(0);}              // ย้ายเคอร์เซอร์ไปบนสุดของข้อความ
+            else {txtHow.setText(""); }});                // ไม่มีแถวที่เลือก ให้ล้างข้อความ
+
+        jList1.setSelectedIndex(0); }                     // เลือกวันแรก (จันทร์) เป็นค่าเริ่มต้น
+
+    private void showDay(int idx) {                       // แสดงตารางของวันที่ index = idx
+        if (idx < 0) return;                              // ถ้าไม่มีการเลือก (-1) ไม่ต้องทำอะไร
+        currentRows = plans.get(idx).rows;                // เก็บรายการท่าของวันนั้นไว้ใช้ภายหลัง
+        DefaultTableModel tm = (DefaultTableModel) jTable1.getModel();  // ดึงโมเดลของตาราง
+        tm.setRowCount(0);                                // ลบแถวเดิมทั้งหมด
+        for (String[] r : currentRows) { tm.addRow(new Object[]{r[0], r[1], r[2], r[3]});}  // เพิ่มแถวใหม่ (ไม่แสดงวิธีทำในตาราง)
+        txtHow.setText("");                               // ล้างช่องวิธีทำ
+        if (!currentRows.isEmpty()) {jTable1.setRowSelectionInterval(0, 0);}}  // เลือกแถวแรกอัตโนมัติ
+
+    // ===================== ตรวจสอบตัวเลขจากช่องกรอก =====================
+    private double readNumber(javax.swing.JTextField f, String name, double min, double max) {  // อ่านและตรวจตัวเลขจากช่องกรอก
+        String text = f.getText().trim();                 // อ่านข้อความและตัดช่องว่างหน้าหลัง
+        if (text.isEmpty()) {                             // ถ้าช่องว่าง
+            f.requestFocusInWindow();                     // ให้โฟกัสที่ช่องนั้น
+            throw new IllegalArgumentException("Please fill in \"" + name + "\""); }  // โยนข้อผิดพลาดพร้อมข้อความแจ้ง
+        if (!text.matches("\\d+(\\.\\d+)?")) {            // ตรวจรูปแบบ: ต้องเป็นตัวเลขบวก (จำนวนเต็มหรือทศนิยม)
+            f.requestFocusInWindow();                     // โฟกัสช่อง
+            f.selectAll();                                // เลือกข้อความทั้งหมดให้แก้ไขได้ทันที
+            throw new IllegalArgumentException("\"" + name + "\" must be a number.");}  // แจ้งว่าไม่ใช่ตัวเลข
+        double v = Double.parseDouble(text);              // แปลงข้อความเป็นเลข double
+        if (v < min) {                                    // ถ้าน้อยกว่าค่าต่ำสุด
+            f.requestFocusInWindow();
+            f.selectAll();
+            throw new IllegalArgumentException(String.format("\"%s\" Too low (must not be less than %.0f)", name, min)); }
+        if (v > max) {                                    // ถ้ามากกว่าค่าสูงสุด
+            f.requestFocusInWindow();
+            f.selectAll();
+            throw new IllegalArgumentException(String.format( "\"%s\" Too high (must not exceed %.0f)", name, max));}
+        return v;}                                        // ค่าผ่านการตรวจแล้ว คืนค่ากลับ
+
+    @SuppressWarnings("unchecked")                        // ปิดคำเตือนเรื่องชนิดข้อมูล (NetBeans สร้างให้)
+    private void btnBurnActionPerformed(java.awt.event.ActionEvent evt) {  // ทำงานเมื่อกดปุ่มคำนวณการเผาผลาญ
+        btnBurn.setEnabled(false);                        // ปิดปุ่มชั่วคราว กันกดซ้ำ
+        try {
+            double w = readNumber(txtWeight2, "Weight", 20, 300);  // อ่านน้ำหนัก (20-300 กก.)
+            double m = readNumber(txtMinutes, "Time", 1, 600);     // อ่านเวลา (1-600 นาที)
+            int i = cmbSport.getSelectedIndex();          // index ของกีฬาที่เลือก
+
+            double kcal = Calculations.kcalBurned(i, w, m);  // แคลอรี่ที่เผาผลาญ = MET × น้ำหนัก × ชั่วโมง
+            double fatG = kcal / 7.7;                     // แปลงเป็นกรัมไขมัน (1 กรัมไขมัน ≈ 7.7 kcal)
+
+            StringBuilder sb = new StringBuilder();       // ใช้สร้างข้อความผลลัพธ์ทีละส่วน
+            sb.append(String.format("%s %.0f นาที\n", Calculations.SPORT_NAMES[i], m));  // ชื่อกีฬาและเวลา
+            sb.append(String.format("เผาผลาญประมาณ %.0f kcal\n\n", kcal));               // แคลอรี่ที่เผาผลาญ
+            sb.append(String.format("เทียบเท่าไขมันประมาณ %.0f กรัม\n", fatG));          // เทียบเป็นไขมัน
+            sb.append(String.format("ค่า MET = %.1f\n\n", Calculations.SPORT_MET[i]));   // แสดงค่า MET
+
+            sb.append("เทียบกับอาหาร\n");                 // หัวข้อเทียบกับอาหาร
+            sb.append(String.format("• ข้าวสวย 1 จาน (~250 kcal): %.1f จาน\n", kcal / 250));  // เทียบข้าวสวย
+            sb.append(String.format("• ชานมไข่มุก 1 แก้ว (~400 kcal): %.1f แก้ว\n\n", kcal / 400));  // เทียบชานมไข่มุก
+
+            sb.append(String.format("เทียบทุกกิจกรรม (%.0f นาที)\n", m));  // หัวข้อเทียบทุกกิจกรรม
+            for (int k = 0; k < Calculations.SPORT_NAMES.length; k++) {    // วนทุกกีฬา
+                sb.append(String.format("• %s: %.0f kcal\n",               // ชื่อกีฬา + แคลอรี่ที่เผาผลาญ
+                    Calculations.SPORT_NAMES[k], Calculations.kcalBurned(k, w, m)));}
+        lblBurnResult.setText(sb.toString());             // แสดงผลลัพธ์บนป้ายข้อความ
+        } catch (IllegalArgumentException ex) { javax.swing.JOptionPane.showMessageDialog(this, ex.getMessage());  // แจ้งข้อผิดพลาดด้วยกล่องข้อความ
+        } finally {btnBurn.setEnabled(true);}             // เปิดปุ่มคืนเสมอ ไม่ว่าจะสำเร็จหรือไม่
+    }
+
+    private void cmbSportActionPerformed(java.awt.event.ActionEvent evt) {  // อีเวนต์เมื่อเปลี่ยนกีฬา (ยังว่าง)
+    }
+
+    private void txtMinutesActionPerformed(java.awt.event.ActionEvent evt) {  // อีเวนต์เมื่อกด Enter ที่ช่องเวลา (ยังว่าง)
+    }
+
+    private void btnHeartActionPerformed(java.awt.event.ActionEvent evt) {  // ทำงานเมื่อกดปุ่มคำนวณโซนหัวใจ
+        btnHeart.setEnabled(false);                       // ปิดปุ่มชั่วคราว
+        try {
+            double a = readNumber(txtAgeHR, "Age", 10, 100);                    // อ่านอายุ (10-100 ปี)
+            double r = readNumber(txtRestHR, "Resting Heart Rate", 30, 120);    // อ่านชีพจรขณะพัก (30-120 bpm)
+            double max = 220 - a;                         // ชีพจรสูงสุดโดยประมาณ = 220 − อายุ
+            if (max - r <= 0) { throw new IllegalArgumentException("Resting heart rate must be lower than maximum heart rate.");}  // ป้องกันค่าที่ไม่สมเหตุสมผล
+
+            double[][] zones = Calculations.heartZones(a, r);  // คำนวณช่วงชีพจรทุกโซน
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(String.format("อัตราการเต้นสูงสุด = %.0f bpm\n", max));  // แสดงชีพจรสูงสุด
+            sb.append("(สูตร Karvonen: ชีพจรเป้าหมาย = ชีพจรพัก + %HRR × (สูงสุด − พัก))\n\n");  // อธิบายสูตร
+            for (int i = 0; i < zones.length; i++) {      // วนแต่ละโซน
+                sb.append(String.format("■ %s\n    %.0f - %.0f bpm (%.0f-%.0f%%)\n",  // ชื่อโซน ช่วง bpm และ %
+                    Calculations.HEART_ZONE_NAMES[i], zones[i][0], zones[i][1],
+                    Calculations.HEART_ZONE_LO[i] * 100, Calculations.HEART_ZONE_HI[i] * 100));}  // คูณ 100 แปลง 0.5 เป็น 50%
+        lblHeartResult.setText(sb.toString());            // แสดงผลลัพธ์
+        } catch (IllegalArgumentException ex) {javax.swing.JOptionPane.showMessageDialog(this, ex.getMessage());  // แจ้งข้อผิดพลาด
+        } finally {btnHeart.setEnabled(true);}            // เปิดปุ่มคืน
+    }
+
+    private void txtAgeHRActionPerformed(java.awt.event.ActionEvent evt) {  // อีเวนต์ช่องอายุ (แท็บหัวใจ) ยังว่าง
+        // TODO add your handling code here:              // คอมเมนต์ที่ NetBeans สร้างไว้ให้เขียนโค้ดเพิ่ม
+    }
+
+    private void btnCalcActionPerformed(java.awt.event.ActionEvent evt) {  // ทำงานเมื่อกดปุ่มคำนวณ BMI/BMR/TDEE
+        btnCalc.setEnabled(false);                        // ปิดปุ่มชั่วคราว
+        try {
+            double w = readNumber(txtWeight, "Weight", 20, 300);   // อ่านน้ำหนัก
+            double h = readNumber(txtHeight, "Height", 100, 250);  // อ่านส่วนสูง (ซม.)
+            double a = readNumber(txtAge, "Age", 10, 100);         // อ่านอายุ
+            boolean male = cmbGender.getSelectedIndex() == 0;      // index 0 ของเพศ = ชาย (ค่าเป็น true)
+            int activity = cmbActivity.getSelectedIndex();         // ระดับการออกกำลังกาย (index 0-4)
+
+            double bmi = Calculations.bmi(w, h);          // BMI = น้ำหนัก ÷ ส่วนสูง(ม.)²
+            double bmr = Calculations.bmr(w, h, a, male); // BMR ตามสูตร Mifflin-St Jeor
+            double tdee = Calculations.tdee(bmr, activity);  // TDEE = BMR × ตัวคูณตามกิจกรรม
+            double hm = h / 100.0;                        // แปลงส่วนสูงจากซม. เป็นเมตร
+
+            lblResult.setText(String.format("BMI = %.1f\n"   // แสดง BMI 1 ตำแหน่งทศนิยม
+                + "%s\n\n"                                // หมวดหมู่ BMI (ข้อความ)
+                + "BMR (พลังงานขณะพัก): %.0f kcal/วัน\n"    // BMR
+                + "TDEE (พลังงานที่ใช้ต่อวัน): %.0f kcal/วัน\n\n"  // TDEE
+                + "น้ำหนักที่เหมาะสม: %.1f - %.1f กก.\n\n"  // ช่วงน้ำหนักปกติ (BMI 18.5-22.9)
+                + "เป้าหมายแคลอรี่\n"
+                + "• ลดน้ำหนัก: ~%.0f kcal/วัน\n"            // TDEE − 500
+                + "• คงน้ำหนัก: ~%.0f kcal/วัน\n"            // TDEE
+                + "• เพิ่มกล้ามเนื้อ: ~%.0f kcal/วัน\n\n"    // TDEE + 300
+                + "BMR คำนวณด้วยสูตร Mifflin-St Jeor / เกณฑ์ BMI สำหรับคนเอเชีย",  // หมายเหตุวิธีคิด
+                bmi, Calculations.bmiCategory(bmi),        // ค่าที่ใส่แทน %.1f และ %s
+                bmr, tdee,                                 // ค่าที่ใส่แทน BMR และ TDEE
+                18.5 * hm * hm, 22.9 * hm * hm,            // น้ำหนักต่ำสุด-สูงสุดที่เหมาะสม
+                tdee - 500, tdee, tdee + 300));            // เป้าหมายแคลอรี่ 3 แบบ
+        } catch (IllegalArgumentException ex) {javax.swing.JOptionPane.showMessageDialog(this, ex.getMessage());  // แจ้งข้อผิดพลาด
+        } finally {btnCalc.setEnabled(true);}             // เปิดปุ่มคืน
+    }
+
+    private void txtAgeActionPerformed(java.awt.event.ActionEvent evt) {  // อีเวนต์ช่องอายุ (ยังว่าง)
+    }
+
+    private void txtHeightActionPerformed(java.awt.event.ActionEvent evt) {  // อีเวนต์ช่องส่วนสูง (ยังว่าง)
+    }
+
+    private void txtWeightActionPerformed(java.awt.event.ActionEvent evt) {  // อีเวนต์ช่องน้ำหนัก (ยังว่าง)
+    }
+
+    public static void main(String args[]) throws Exception {  // จุดเริ่มต้นของโปรแกรม
+        javax.swing.UIManager.setLookAndFeel(              // ตั้งรูปแบบหน้าต่างตามระบบปฏิบัติการ
+            javax.swing.UIManager.getSystemLookAndFeelClassName());
+        java.awt.EventQueue.invokeLater(() -> new FitnessGUI().setVisible(true));  // สร้างและแสดงหน้าต่างบน thread ของ Swing
+    }
+}                                                         // ปิดคลาส FitnessGUI (ต้องมีตัวนี้ ไม่งั้นคอมไพล์ไม่ผ่าน)
+
+
+// ===== Calculations.java =====  (แยกเป็นอีกไฟล์ เพราะไฟล์หนึ่งมี package ได้แค่ครั้งเดียว)
+package gui;                                              // แพ็กเกจเดียวกับ FitnessGUI
+
+public class Calculations {                               // คลาสเก็บสูตรคำนวณล้วน ๆ แยกจาก GUI
+    public static final String[] SPORT_NAMES = {         // ชื่อกีฬา (ลำดับต้องตรงกับ SPORT_MET)
+        "เดินเร็ว", "วิ่ง (8 กม./ชม.)", "ปั่นจักรยาน", "ว่ายน้ำ",
+        "เต้นแอโรบิก", "ยกน้ำหนัก", "โยคะ", "HIIT", "กระโดดเชือก", "แบดมินตัน"};
+    public static final double[] SPORT_MET = {3.8, 8.3, 7.5, 6.0, 6.5, 5.0, 2.5, 8.0, 11.0, 5.5};  // ค่า MET ของแต่ละกีฬา (index ตรงกับชื่อ)
+
+    public static final String[] HEART_ZONE_NAMES = {    // ชื่อโซนหัวใจ 5 โซน
+        "โซน 1 (ฟื้นฟู)", "โซน 2 (เผาผลาญไขมัน)", "โซน 3 (แอโรบิก)",
+        "โซน 4 (เกณฑ์ความทนทาน)", "โซน 5 (สูงสุด)"};
+    public static final double[] HEART_ZONE_LO = {0.50, 0.60, 0.70, 0.80, 0.90};  // ขอบล่างของแต่ละโซน (% ของ HRR)
+    public static final double[] HEART_ZONE_HI = {0.60, 0.70, 0.80, 0.90, 1.00};  // ขอบบนของแต่ละโซน (% ของ HRR)
+
+    public static double bmi(double w, double h) {       // คำนวณ BMI
+        double hm = h / 100.0;                            // แปลงส่วนสูงเป็นเมตร
+        return w / (hm * hm);}                            // BMI = น้ำหนัก ÷ ส่วนสูง²
+
+    public static double bmr(double w, double h, double a, boolean male) {  // คำนวณ BMR (Mifflin-St Jeor)
+        double sexConstant;                               // ค่าคงที่ตามเพศ
+        if (male) {sexConstant = 5;}                      // ชาย +5
+        else { sexConstant = -161; }                      // หญิง −161
+        return 10 * w + 6.25 * h - 5 * a + sexConstant;}  // BMR = 10w + 6.25h − 5a ± ค่าเพศ
+
+    public static double tdee(double bmr, int activityIndex) {  // คำนวณ TDEE
+        double[] mul = {1.2, 1.375, 1.55, 1.725, 1.9};   // ตัวคูณตามระดับกิจกรรม (นั่งเฉย ๆ → หนักมาก)
+        return bmr * mul[activityIndex];}                 // TDEE = BMR × ตัวคูณที่เลือก
+
+    public static String bmiCategory(double bmi) {       // แปลงค่า BMI เป็นหมวดหมู่ (เกณฑ์เอเชีย)
+        if (bmi < 18.5) return "น้ำหนักต่ำกว่าเกณฑ์";       // ต่ำกว่า 18.5
+        if (bmi < 23)   return "สมส่วน (ปกติ)";            // 18.5 - 22.9
+        if (bmi < 25)   return "น้ำหนักเกิน";              // 23 - 24.9
+        if (bmi < 30)   return "โรคอ้วนระดับ 1";            // 25 - 29.9
+        return "โรคอ้วนระดับ 2"; }                         // 30 ขึ้นไป
+
+    public static double kcalBurned(int sportIndex, double weight, double minutes) {  // คำนวณแคลอรี่ที่เผาผลาญ
+        return SPORT_MET[sportIndex] * weight * (minutes / 60.0);}  // kcal = MET × น้ำหนัก × ชั่วโมง
+
+    public static double[][] heartZones(double age, double restHR) {  // คำนวณช่วงชีพจรแต่ละโซน (สูตร Karvonen)
+        double max = 220 - age;                           // ชีพจรสูงสุด
+        double reserve = max - restHR;                    // HRR = ชีพจรสูงสุด − ชีพจรพัก
+        double[][] zones = new double[HEART_ZONE_LO.length][2];  // ตารางเก็บ [โซน][ต่ำสุด, สูงสุด]
+        for (int i = 0; i < HEART_ZONE_LO.length; i++) {  // วนทีละโซน
+            zones[i][0] = restHR + HEART_ZONE_LO[i] * reserve;  // ขอบล่าง = ชีพจรพัก + % ล่าง × HRR
+            zones[i][1] = restHR + HEART_ZONE_HI[i] * reserve;} // ขอบบน = ชีพจรพัก + % บน × HRR
+        return zones; }                                   // คืนค่าทุกโซน
+}                                                         // ปิดคลาส Calculations
